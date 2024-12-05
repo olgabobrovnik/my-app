@@ -1,0 +1,771 @@
+openapi: 3.0.3
+info:
+  title: API для работы с косметическими продуктами
+  version: 1.0.0
+  description: >-
+    API предоставляет возможность взаимодействия с системой, содержащей
+    информацию о косметических продуктах, статьях и пользователях
+tags:
+  - name: articles
+    description: Информация о статьях
+  - name: product
+    description: Информация о продукте
+  - name: user
+    description: Информация опользователе
+  - name: stores
+    description: Список магазинов
+  - name: search
+    description: Методы поиска продукта
+paths:
+  /api/v1/searchProductByImage:
+    post:
+      tags:
+        - search
+      summary: Поиск продукта по изображению
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Успешное распознавание косметического продукта
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  productId:
+                    type: string
+                    example: '1234'
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: >-
+                      Изображение не было предоставлено или имеет некорректный
+                      формат.
+        '404':
+          description: Продукт не найден
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Не удалось найти продукт по предоставленному изображению.
+        '500':
+          $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/searchProductByText:
+    get:
+      tags:
+        - search
+      summary: Поиск продукта в строке поиска
+      parameters:
+        - name: text
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Продукт успешно найден
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  productId:
+                    type: string
+                    example: '1234'
+        '400':
+          description: Неверный запрос. Параметр текст не может быть пустым
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Параметр 'text' не может быть пустым.
+        '404':
+          description: Продукт не найден
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Продукт с заданным текстом не найден.
+        '500':
+          $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/articles:
+    get:
+      tags:
+        - articles
+      summary: Получить список статей
+      description: Возвращает список статей, включая id, изображение и заголовок
+      responses:
+        '200':
+          description: Успешное получение списка статей
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example: 123
+                    title:
+                      type: string
+                      example: 11 лучших корейских масок для лица
+                    imageUrl:
+                      type: string
+                      format: uri
+                      example: http://example.com/image.jpg
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Неправильный формат запроса
+        '404':
+          description: Статьи не найдены
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Статьи не найдены
+        '500':
+          $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/product/{productId}:
+    get:
+      tags:
+        - product
+      summary: Получить информацию о косметическом продукте по id
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Успешный ответ с информацией о продукте
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1234
+                  brand:
+                    type: string
+                    example: Rituals
+                  product_name:
+                    type: string
+                    example: >-
+                      Гель-пенка для душа The Alchemy Collection с ароматом
+                      амбры и мирры
+                  purpose:
+                    type: string
+                    example: Средство для душа
+                  application_method:
+                    type: string
+                    example: >-
+                      Намочите кожу теплой водой, выдавите небольшое количество
+                      геля на ладонь или губку, массируйте кожу до образования
+                      пены, тщательно смойте теплой водой и при желании нанесите
+                      увлажняющий крем или лосьон, избегая попадания в глаза
+                  ingredients:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        ingredient_name:
+                          type: string
+                          example: Coumarin
+                        risk_level:
+                          type: integer
+                          enum:
+                            - 0
+                            - 1
+                            - 2
+                            - 3
+                            - 4
+                          example: 2
+                        explanation:
+                          type: string
+                          example: >-
+                            Ароматизатор, обладает фотозащитными свойствами.
+                            Является аллергеном. Применение не желательно.
+                  image_url:
+                    type: string
+                    format: uri
+                    example: http://example.com/image1.jpg
+        '400':
+          description: Неверный запрос. Указан неправильный формат productId.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Неверный формат productId. Должен быть целым числом.
+        '404':
+          description: Продукт с таким id не найден.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Продукт с id 1234 не найден.
+        '500':
+          $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/product/{productId}/rating:
+    get:
+      tags:
+        - product
+      summary: Получить оценку товара
+      description: >-
+        Получает среднее арифметическое всех оценок, общее количество оценок и
+        количество пользователей для каждой оценки.
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Успешный ответ с оценками товара
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  averageRating:
+                    type: number
+                    format: float
+                    example: 4.2
+                  totalRatings:
+                    type: integer
+                    example: 150
+                  ratingCount:
+                    type: object
+                    additionalProperties:
+                      type: integer
+                    example:
+                      '1': 10
+                      '2': 20
+                      '3': 30
+                      '4': 40
+                      '5': 50
+        '400':
+          description: Неверный запрос. Указан неправильный формат productра
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Неверный формат productId.
+        '404':
+          description: Товар не найден
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Товар с указанным id не найден.
+        '500':
+          $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/product/{productId}/reviews:
+    get:
+      tags:
+        - product
+      summary: Получить список отзывов
+      description: Возвращает список отзывов, созданных пользователями о продуктах.
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Список отзывов успешно получен
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Review'
+        '400':
+          description: Неверный запрос. Проверьте правильность переданного productId.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Неверный формат productId. Должен быть целым числом.
+        '404':
+          description: Продукт не найден. Отзывы отсутствуют.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Продукт с данным id не найден.
+        '500':
+          $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+        - product
+      summary: Добавить оценку и отзыв о товаре
+      description: Позволяет пользователям отправлять свои оценки и отзывы для товара.
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rating:
+                  type: integer
+                  enum:
+                    - 1
+                    - 2
+                    - 3
+                    - 4
+                    - 5
+                  example: 5
+                review:
+                  type: string
+                  example: >-
+                    Отличный гель для душа! У него приятный аромат и хорошо
+                    пенится. Рекомендую!
+      responses:
+        '201':
+          description: Отзыв и оценка успешно добавлены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+        '400':
+          description: Неверный запрос. Убедитесь, что все поля заполнены правильно.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Поле 'rating' обязательно для заполнения
+        '404':
+          description: Продукт не найден. Убедитесь, что указанный productId существует.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Продукт с указанным ID не найден
+        '422':
+          description: Ошибка валидации. Обязанности по полю не выполнены.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Рейтинг должен быть от 1 до 5
+        '500':
+          $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/stores:
+    get:
+      tags:
+        - stores
+      summary: Получить список магазинов
+      parameters:
+        - name: productId
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: sort
+          in: query
+          required: false
+          description: Параметр для сортировки результатов по цене
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: asc
+      responses:
+        '200':
+          description: Успешный ответ с списком магазинов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      example: Магазин 'Золотое яблоко'
+                    address:
+                      type: string
+                      example: Минск пр-т. Победителей, 9. ТРЦ GALLERIA
+                    price:
+                      type: number
+                      format: float
+                      example: 119.99
+                    status:
+                      type: string
+                      enum:
+                        - available
+                        - out_of_stock
+                      example: available
+        '400':
+          description: Неверный запрос; productId обязателен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: productId обязателен
+        '404':
+          description: Магазины не найдены для данного productId
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Магазины для данного productId не найдены
+        '500':
+          $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/user/{userId}:
+    get:
+      tags:
+        - user
+      summary: Получить информацию о профиле пользователя
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: ID пользователя
+          schema:
+            type: integer
+            example: 123
+      responses:
+        '200':
+          description: Успешный ответ с информацией о пользователе
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 123
+                  userPhoto:
+                    type: string
+                    format: uri
+                    example: http://example.com/photos/user123.jpg
+                  username:
+                    type: string
+                    example: Иван Иванов
+                  email:
+                    type: string
+                    format: email
+                    example: ivanivanov@gmail.com
+                  isSelf:
+                    type: boolean
+                    example: true
+        '400':
+          description: Неверный запрос, неверный формат ID пользователя
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Неверный формат ID пользователя
+        '403':
+          description: Доступ запрещен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: У вас нет прав для доступа к этому ресурсу
+        '404':
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Пользователь с таким ID не найден
+        '500':
+          $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+        - user
+      summary: Обновить информацию о пользователе
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: ID пользователя
+          schema:
+            type: integer
+            example: 123
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  example: 123
+                userPhoto:
+                  type: string
+                  format: uri
+                  example: http://example.com/photos/user1234.jpg
+                username:
+                  type: string
+                  example: Иван Петров
+                email:
+                  type: string
+                  format: email
+                  example: ivanpetrov@gmail.com
+      responses:
+        '200':
+          description: Успешное обновление информации пользователя
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 123
+                  userPhoto:
+                    type: string
+                    format: uri
+                    example: http://example.com/photos/user1234.jpg
+                  username:
+                    type: string
+                    example: Иван Петров
+                  email:
+                    type: string
+                    format: email
+                    example: ivanpetrov@gmail.com
+        '400':
+          description: Неверный формат запроса
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Неправильные данные в запросе
+        '401':
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Необходима авторизация
+        '403':
+          description: Доступ запрещен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: У вас нет прав для изменения этой информации
+        '404':
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Пользователь с данным ID не найден
+        '500':
+          $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/user/{userId}/password:
+    post:
+      tags:
+        - user
+      summary: Изменить пароль
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 123
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                currentPassword:
+                  type: string
+                  format: password
+                  example: MoyParol1
+                newPassword:
+                  type: string
+                  format: password
+                  example: MoyParol2
+      responses:
+        '200':
+          description: Пароль успешно изменен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Пароль успешно изменен
+        '400':
+          description: Неверный запрос
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Текущий пароль не совпадает.
+        '401':
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Недостаточно прав для изменения пароля.
+        '403':
+          description: Запрещено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Пароль не соответствует требованиям безопасности.
+        '404':
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Пользователь с указанным id не найден.
+        '500':
+          $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Произошла ошибка на сервере. Пожалуйста, повторите попытку позже.
+    Review:
+      type: object
+      properties:
+        reviewId:
+          type: integer
+          example: 1
+        userId:
+          type: integer
+          example: 123
+        date:
+          type: string
+          format: date-time
+          example: '2023-10-01T14:30:00Z'
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 5
+        reviewText:
+          type: string
+          example: >-
+            Отличный гель для душа! У него приятный аромат и хорошо пенится.
+            Рекомендую!
